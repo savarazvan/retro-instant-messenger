@@ -1,20 +1,17 @@
 package com.example.ressenger;
 
 import android.app.Activity;
-import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import android.renderscript.Sampler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -22,8 +19,12 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -36,22 +37,18 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
 
-import java.io.File;
-import java.io.IOException;
-
+import java.io.InputStream;
+import java.net.URL;
 
 public class ProfileFragment extends Fragment {
 
-    ImageView profilePic, profilePicEdit;
-    TextView profileName, profileStatus, profileBio;
-    Button profileEdit, profileEditSave, profileEditCancel;
-    EditText profileNameEdit, profileStatusEdit, profileBioEdit;
-    DatabaseReference myRef, myRefName, myRefStatus, myRefBio;
-
-    ScrollView scrollViewProfile, scrollViewProfileEdit;
-
-    Uri imageUri;
-
+    private ImageView profilePic, profilePicEdit;
+    private TextView profileName, profileStatus, profileBio;
+    private EditText profileNameEdit, profileStatusEdit, profileBioEdit;
+    private DatabaseReference myRef, myRefName, myRefStatus, myRefBio;
+    private ScrollView scrollViewProfile, scrollViewProfileEdit;
+    private Uri imageUri;
+    private StorageReference storage;
     public ProfileFragment() {}
     
     @Override
@@ -62,20 +59,23 @@ public class ProfileFragment extends Fragment {
         profilePicEdit = rootView.findViewById(R.id.profilePicEdit);
         profileName = rootView.findViewById(R.id.profileName);
         profileStatus = rootView.findViewById(R.id.profileStatus);
-        profilePic = rootView.findViewById(R.id.profilePic);
         profileBio = rootView.findViewById(R.id.profileBio);
-        profileEdit = rootView.findViewById(R.id.profileEdit);
-        profileEditSave = rootView.findViewById(R.id.profileEditSave);
-        profileEditCancel = rootView.findViewById(R.id.profileEditCancel);
         profileNameEdit = rootView.findViewById(R.id.profileNameEdit);
         profileStatusEdit = rootView.findViewById(R.id.profileStatusEdit);
         profileBioEdit = rootView.findViewById(R.id.profileBioEdit);
         scrollViewProfile = rootView.findViewById(R.id.scrollViewProfile);
         scrollViewProfileEdit = rootView.findViewById(R.id.scrollViewEditProfile);
+        final Button profileEdit = rootView.findViewById(R.id.profileEdit);
+        final Button profileEditSave = rootView.findViewById(R.id.profileEditSave);
+        final Button profileEditCancel = rootView.findViewById(R.id.profileEditCancel);
+
+
         myRef = FirebaseDatabase.getInstance().getReference("users/"+ FirebaseAuth.getInstance().getCurrentUser().getUid());
         myRefName = myRef.child("name");
         myRefStatus = myRef.child("status");
         myRefBio = myRef.child("bio");
+        final String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        storage = FirebaseStorage.getInstance().getReference("pictures/"+uid);
 
         myRefName.addValueEventListener(new ValueEventListener() {
             @Override
@@ -113,6 +113,17 @@ public class ProfileFragment extends Fragment {
             public void onCancelled(@NonNull DatabaseError databaseError) {}
         });
 
+        myRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                retrieveImage(dataSnapshot, uid);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
+        });
+
+
         scrollViewProfile.setVisibility(View.VISIBLE);
         scrollViewProfileEdit.setVisibility(View.GONE);
 
@@ -128,6 +139,7 @@ public class ProfileFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 scrollViewProfileEdit.setVisibility(View.GONE);
+                profilePicEdit.setImageDrawable(profilePic.getDrawable());
                 scrollViewProfile.setVisibility(View.VISIBLE);
             }
         });
@@ -141,6 +153,7 @@ public class ProfileFragment extends Fragment {
 
                 scrollViewProfileEdit.setVisibility(View.GONE);
                 scrollViewProfile.setVisibility(View.VISIBLE);
+                uploadImage();
 
             }
         });
@@ -153,10 +166,6 @@ public class ProfileFragment extends Fragment {
         });
         
         return rootView;
-    }
-    
-    public interface OnFragmentInteractionListener {
-        void onFragmentInteraction(Uri uri);
     }
 
     private void updateProfile(String username, String status, String bio)
@@ -186,60 +195,37 @@ public class ProfileFragment extends Fragment {
         if (requestCode == 1 && resultCode == Activity.RESULT_OK
                 && data != null && data.getData() != null) {
             imageUri = data.getData();
-
-            uploadImage(imageUri);
-            Picasso.get().load(imageUri).into(profilePic);
             Picasso.get().load(imageUri).into(profilePicEdit);
         }
     }
 
-    public static String getMimeType(Context context, Uri uri) {
-        String extension;
-        if (uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
-            final MimeTypeMap mime = MimeTypeMap.getSingleton();
-            extension = mime.getExtensionFromMimeType(context.getContentResolver().getType(uri));
-        } else {
-            extension = MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(new File(uri.getPath())).toString());
-        }
-
-        return extension;
-    }
-
-    private void uploadImage(Uri uri)
+    private void uploadImage()
     {
-        if(uri==null)
+        if(imageUri==null)
             return;
-
-        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        StorageReference storage = FirebaseStorage.getInstance().getReference("pictures/"+uid);
         storage.putFile(imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                Toast.makeText(ProfileFragment.this.getActivity(), "Image uploaded successfully!", Toast.LENGTH_LONG).show();
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Toast.makeText(ProfileFragment.this.getActivity(), "Image upload failed!", Toast.LENGTH_LONG).show();
-            }
-        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onProgress(@NonNull UploadTask.TaskSnapshot taskSnapshot) {
+
+                Task<Uri> urlTask = taskSnapshot.getStorage().getDownloadUrl();
+                while (!urlTask.isSuccessful());
+                Uri downloadUrl = urlTask.getResult();
+                myRef.child("profile pic").setValue(downloadUrl.toString());
+
             }
         });
-
     }
 
-    private void retrieveImage()
+    private void retrieveImage(DataSnapshot dataSnapshot, String uid)
     {
-        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        try {
-            File profilePic = File.createTempFile("images", "jpg");
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (dataSnapshot.exists()){
+            String url = dataSnapshot.child("profile pic").getValue(String.class);
+            Glide.with(getActivity()).load(url).asBitmap().into(profilePic);
         }
+    }
 
-
-
+    public interface OnFragmentInteractionListener {
+        void onFragmentInteraction(Uri uri);
     }
 }
+
