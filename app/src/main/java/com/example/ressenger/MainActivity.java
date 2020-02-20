@@ -111,13 +111,30 @@ public class MainActivity extends AppCompatActivity implements RecentsFragment.O
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
+    protected void onResume() {
 
-        if(mAuth.getCurrentUser()==null)
-            goToLogin();
-        else
-            toolbar.setTitle("Hello there, " + mAuth.getCurrentUser().getDisplayName() +"!");
+        myRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                name = dataSnapshot.getValue(String.class);
+                toolbar.setTitle("Hello there, " + name+'!');
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {}
+        });
+
+        super.onResume();
+    }
+
+    @Override
+    protected void onResumeFragments() {
+        super.onResumeFragments();
+    }
+
+    @Override
+    public void onTopResumedActivityChanged(boolean isTopResumedActivity) {
+        super.onTopResumedActivityChanged(isTopResumedActivity);
     }
 
     private void goToLogin()

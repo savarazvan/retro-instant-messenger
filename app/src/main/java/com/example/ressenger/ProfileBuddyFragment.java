@@ -1,4 +1,5 @@
 package com.example.ressenger;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -52,38 +53,28 @@ public class ProfileBuddyFragment extends Fragment {
         @Override
         public void onCancelled(@NonNull DatabaseError databaseError) {}
     };
-    private ValueEventListener checkIfFriends = new ValueEventListener() {
-        @Override
-        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            if(dataSnapshot.child(myUid+"/buddies").hasChild(uid)
-                && dataSnapshot.child(uid+"/buddies").hasChild(myUid))
-                friendshipState= "friends";
-                addFriendButton.setVisibility(View.GONE);
-        }
 
-        @Override
-        public void onCancelled(@NonNull DatabaseError databaseError) {
+    @Override
+    public void onStart() {
+        DatabaseReference reference = ChatActivity.ref;
+        DatabaseReference requests = FirebaseDatabase.getInstance().getReference("friend-requests");
+        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
 
-        }
-    };
+        reference.addValueEventListener(listener);
+        requests.addValueEventListener(updateState);
+        super.onStart();
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = (View) inflater.inflate(R.layout.fragment_profile_buddy, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_profile_buddy, container, false);
         name = rootView.findViewById(R.id.buddyProfileName);
         status = rootView.findViewById(R.id.buddyProfileStatus);
         bio = rootView.findViewById(R.id.buddyProfileBio);
         addFriendButton = rootView.findViewById(R.id.addFriendButton);
         profilePic = rootView.findViewById(R.id.buddyProfilePic);
-        DatabaseReference reference = ChatActivity.ref;
         myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference requests = FirebaseDatabase.getInstance().getReference("friend-requests");
-        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
-        usersRef.addValueEventListener(checkIfFriends);
-        reference.addValueEventListener(listener);
-        requests.addValueEventListener(updateState);
-
         addFriendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -192,6 +183,12 @@ public class ProfileBuddyFragment extends Fragment {
 
     public interface OnFragmentInteractionListener {
         void onFragmentInteraction(Uri uri);
+    }
+
+    @Override
+    public void onStop() {
+        super.onDestroy();
+        super.onStop();
     }
 }
 

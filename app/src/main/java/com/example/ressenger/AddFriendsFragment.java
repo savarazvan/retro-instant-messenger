@@ -14,6 +14,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.provider.ContactsContract;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,7 +53,7 @@ public class AddFriendsFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = (View) inflater.inflate(R.layout.fragment_add_friends, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_add_friends, container, false);
 
         searchButton = rootView.findViewById(R.id.searchButton);
         searchText = rootView.findViewById(R.id.searchText);
@@ -65,6 +67,20 @@ public class AddFriendsFragment extends Fragment {
                 SearchPeople(searchText.getText().toString().trim(), false);
             }
         });
+
+        searchText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                SearchPeople(searchText.getText().toString().trim(), false);
+            }
+        });
+
         searchResults.setHasFixedSize(true);
         searchResults.setLayoutManager(new LinearLayoutManager((AddFriendsFragment.this.getActivity())));
         SearchPeople(null, true);
