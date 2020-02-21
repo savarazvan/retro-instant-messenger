@@ -23,15 +23,44 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
-public class RecentsFragment extends Fragment {
+public class RecentsFragment extends Fragment implements RecentsAdapter.onMessageListener {
 
-    private DatabaseReference messagesRef;
+    RecentsAdapter.onMessageListener listener = this;
     private RecyclerView recentMessages;
-
+    private DatabaseReference messagesRef, userRef;
+    private List<Message> fetchedMessages = new ArrayList<>();
     public RecentsFragment() {}
+    private ValueEventListener fetchMessages = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            fetchedMessages.clear();
+            List<String> uids = new ArrayList<>();//here we'll store the users that have already been fetched in order to avoid duplicates
+            for (DataSnapshot node:dataSnapshot.getChildren()
+                 ) {
+
+                //if the message isn't addressed to us or the user has already been fetched, skip
+                if(!node.child("receiver").getValue().toString().equals(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                || uids.contains(node.child("sender").getValue().toString()))
+                    continue;
+                uids.add(node.child("sender").getValue().toString());
+                fetchedMessages.add(node.getValue(Message.class));
+            }
+
+
+            RecentsAdapter adapter = new RecentsAdapter(RecentsFragment.this.getActivity(), fetchedMessages, listener);
+
+            recentMessages.setAdapter(adapter);
+
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {}
+    };
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -41,7 +70,7 @@ public class RecentsFragment extends Fragment {
         recentMessages = rootView.findViewById(R.id.recentMessages);
         recentMessages.setHasFixedSize(true);
         recentMessages.setLayoutManager(new LinearLayoutManager(RecentsFragment.this.getActivity()));
-        //fetchMessages();
+        messagesRef.addValueEventListener(fetchMessages);
         return rootView;
     }
 
@@ -49,50 +78,11 @@ public class RecentsFragment extends Fragment {
         void onFragmentInteraction(Uri uri);
     }
 
-    private void fetchMessages()
-    {
-        String myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        Query recentsQuery = messagesRef
-                .orderByChild("receiver").startAt(myUid).endAt(myUid + "\uf8ff");
-        FirebaseRecyclerAdapter<RecentMessages, AddFriendsFragment.FindPeopleViewHolder> adapter =
-                new FirebaseRecyclerAdapter<RecentMessages, AddFriendsFragment.FindPeopleViewHolder>
-                        (
-                                RecentMessages.class,
-                                R.layout.layout_buddy,
-                                AddFriendsFragment.FindPeopleViewHolder.class,
-                                recentsQuery
-                        ) {
-                    @Override
-                    protected void populateViewHolder(final AddFriendsFragment.FindPeopleViewHolder findPeopleViewHolder, final RecentMessages recentMessages, int i) {
-
-                        final DatabaseReference currentUser = FirebaseDatabase.getInstance().getReference("users/" + recentMessages.getSender());
-
-                        while(recentMessages.getName()==null) {
-                            currentUser.addValueEventListener(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                    recentMessages.setName(dataSnapshot.child("name").getValue(String.class));
-                                }
-
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError databaseError) {
-                                }
-                            });
-                        }
-
-                        findPeopleViewHolder.setUsername(recentMessages.getName());
-                        findPeopleViewHolder.setStatus(recentMessages.getContent());
-                        findPeopleViewHolder.view.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                ChatActivity.ref = currentUser;
-                                Intent intent = new Intent(RecentsFragment.this.getActivity(), ChatActivity.class);
-                                startActivity(intent);
-                            }
-                        });
-                    }
-                };
-
-        recentMessages.setAdapter(adapter);
+    @Override
+    public void onMessage(int position) {
+        Message message = fetchedMessages.get(position);
+        ChatActivity.ref = FirebaseDatabase.getInstance().getReference("users/"+message.getSender());
+        Intent intent = new Intent(RecentsFragment.this.getActivity(), ChatActivity.class);
+        startActivity(intent);
     }
 }

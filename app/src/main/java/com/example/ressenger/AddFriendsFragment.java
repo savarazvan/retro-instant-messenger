@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.location.OnNmeaMessageListener;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -19,6 +20,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewManager;
 import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.BaseExpandableListAdapter;
@@ -136,14 +138,23 @@ public class AddFriendsFragment extends Fragment {
             searchResults.setAdapter(adapter);
     }
 
-    public static class FindPeopleViewHolder extends RecyclerView.ViewHolder
+    public static class FindPeopleViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener
     {
         View view;
+        RecentsAdapter.onMessageListener listener;
 
         public FindPeopleViewHolder(View itemView)
         {
             super(itemView);
             view = itemView;
+        }
+
+        public FindPeopleViewHolder(View itemView, RecentsAdapter.onMessageListener listener)
+        {
+            super(itemView);
+            view = itemView;
+            this.listener=listener;
+            itemView.setOnClickListener(this);
         }
 
         public void setUsername(String name) {
@@ -155,6 +166,13 @@ public class AddFriendsFragment extends Fragment {
         {
             TextView statusText = view.findViewById(R.id.Status);
             statusText.setText(status);
+        }
+
+
+        @Override
+        public void onClick(View v) {
+            if(listener!=null)
+                listener.onMessage(getAdapterPosition());
         }
     }
 

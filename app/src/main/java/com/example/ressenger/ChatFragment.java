@@ -23,6 +23,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
@@ -51,16 +52,88 @@ public class ChatFragment extends Fragment {
     ImageButton fontButton;
     public static int preferredFont = 0, textSize = 0, color = Color.parseColor("#000000");
 
-    private byte encryptionKey[] = {9, 115, 51, 86, 105, 4, -31, -23, -68, 88, 17, 20, 3, -105, 119, -53};
+    private byte[] encryptionKey = {9, 115, 51, 86, 105, 4, -31, -23, -68, 88, 17, 20, 3, -105, 119, -53};
     private Cipher cipher, decipher;
     private SecretKeySpec secretKeySpec;
 
 
     public ChatFragment() {}
+    private ValueEventListener retrieveMessages = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            textBoxText.setHint("Write "+ChatActivity.name+" a message");
+            mList = new ArrayList<>();
+            mList.clear();
+            String myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            for(DataSnapshot ds : dataSnapshot.getChildren())
+            {
+                Message newMessage = ds.getValue(Message.class);
+                if(newMessage.getReceiver().equals(myUid) && newMessage.getSender().equals(ChatActivity.uid))
+                    {
+                        newMessage.setSender(ChatActivity.name + " says:");
+                        try {
+                            newMessage.setContent(AESDecryptionMethod(newMessage.getContent()));
+                        } catch (UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                        }
+                        mList.add(newMessage);
+                    }
+
+                else if (newMessage.getReceiver().equals(ChatActivity.uid) && newMessage.getSender().equals(myUid))
+                {
+                    newMessage.setSender("Me:");
+                    try {
+                        newMessage.setContent(AESDecryptionMethod(newMessage.getContent()));
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+                    mList.add(newMessage);
+                }
+
+            }
+
+            messageAdapter = new MessageAdapter(ChatFragment.this.getActivity(), mList);
+
+            recyclerView.setAdapter(messageAdapter);
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+        }
+    };
+
+
+    public interface OnFragmentInteractionListener {
+        void onFragmentInteraction(Uri uri);
+    }
+
+    private void sendMessage(String message)
+    {
+        if(message==null)
+            return;
+
+        Map<String, Object> map = new HashMap<String, Object>();
+        String tempKey = myRef.push().getKey();
+        myRef.updateChildren(map);
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = new Date();
+        String currentDate = formatter.format(date);
+        DatabaseReference messageRef = myRef.child(tempKey);
+        Map<String, Object> map2 = new HashMap<String, Object>();
+        map2.put("content", AESEncryptionMethod(message));
+        map2.put("sender", FirebaseAuth.getInstance().getCurrentUser().getUid());
+        map2.put("receiver", ChatActivity.uid);
+        map2.put("date", currentDate);
+        map2.put("font", preferredFont);
+        map2.put("size", textSize);
+        map2.put("color", color);
+        messageRef.updateChildren(map2);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = (View) inflater.inflate(R.layout.fragment_chat, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_chat, container, false);
         mAuth = FirebaseAuth.getInstance();
         sendButton = rootView.findViewById(R.id.sendButton);
         textBoxText = rootView.findViewById(R.id.textBoxText);
@@ -103,80 +176,7 @@ public class ChatFragment extends Fragment {
 
     }
 
-
-    public interface OnFragmentInteractionListener {
-        void onFragmentInteraction(Uri uri);
-    }
-
-    private void sendMessage(String message)
-    {
-        if(message==null)
-            return;
-
-        Map<String, Object> map = new HashMap<String, Object>();
-        String tempKey = myRef.push().getKey();
-        myRef.updateChildren(map);
-        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
-        Date date = new Date();
-        String currentDate = formatter.format(date);
-        DatabaseReference messageRef = myRef.child(tempKey);
-        Map<String, Object> map2 = new HashMap<String, Object>();
-        map2.put("content", AESEncryptionMethod(message));
-        map2.put("sender", FirebaseAuth.getInstance().getCurrentUser().getUid());
-        map2.put("receiver", ChatActivity.uid);
-        map2.put("date", currentDate);
-        map2.put("font", preferredFont);
-        map2.put("size", textSize);
-        map2.put("color", color);
-        messageRef.updateChildren(map2);
-    }
-
-    private ValueEventListener retrieveMessages = new ValueEventListener() {
-        @Override
-        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            textBoxText.setHint("Write "+ChatActivity.name+" a message");
-            mList = new ArrayList<>();
-            mList.clear();
-            String myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-            for(DataSnapshot ds : dataSnapshot.getChildren())
-            {
-                Message newMessage = ds.getValue(Message.class);
-                if(newMessage.getReceiver().equals(myUid) && newMessage.getSender().equals(ChatActivity.uid))
-                    {
-                        newMessage.setSender(ChatActivity.name + "says:");
-                        try {
-                            newMessage.setContent(AESDecryptionMethod(newMessage.getContent()));
-                        } catch (UnsupportedEncodingException e) {
-                            e.printStackTrace();
-                        }
-                        mList.add(newMessage);
-                    }
-
-                else if (newMessage.getReceiver().equals(ChatActivity.uid) && newMessage.getSender().equals(myUid))
-                {
-                    newMessage.setSender("Me:");
-                    try {
-                        newMessage.setContent(AESDecryptionMethod(newMessage.getContent()));
-                    } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace();
-                    }
-                    mList.add(newMessage);
-                }
-
-            }
-
-            messageAdapter = new MessageAdapter(ChatFragment.this.getActivity(), mList);
-
-            recyclerView.setAdapter(messageAdapter);
-        }
-
-        @Override
-        public void onCancelled(@NonNull DatabaseError databaseError) {
-
-        }
-    };
-
-    private String AESEncryptionMethod(String message)
+    public String AESEncryptionMethod(String message)
     {
         byte[] messageBytes = message.getBytes();
         byte[] encryptedBytes = new byte[messageBytes.length];
@@ -194,19 +194,15 @@ public class ChatFragment extends Fragment {
 
         String returnedMessage = null;
 
-        try {
-            returnedMessage = new String(encryptedBytes, "ISO-8859-1");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        returnedMessage = new String(encryptedBytes, StandardCharsets.ISO_8859_1);
 
         return  returnedMessage;
 
     }
 
-    private String AESDecryptionMethod(String message) throws UnsupportedEncodingException {
+    public String AESDecryptionMethod(String message) throws UnsupportedEncodingException {
 
-        byte[] encryptedBytes = message.getBytes("ISO-8859-1");
+        byte[] encryptedBytes = message.getBytes(StandardCharsets.ISO_8859_1);
         String decryptedMessage = message;
 
         byte[] decryption;
@@ -227,3 +223,4 @@ public class ChatFragment extends Fragment {
     }
 
 }
+
