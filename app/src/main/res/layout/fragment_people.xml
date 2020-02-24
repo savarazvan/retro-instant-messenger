@@ -6,17 +6,8 @@
     android:layout_height="match_parent"
     tools:context=".PeopleFragment">
 
-    <ExpandableListView
-        android:id="@+id/expandableListView"
-        style="@android:style/Widget.DeviceDefault.ExpandableListView"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/peopleRecycler"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/chatbg"
-        android:divider="#000000"
-        android:dividerHeight="0.5dp"
-        android:indicatorRight="?android:attr/expandableListPreferredItemIndicatorRight"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tabLayout" />
+        android:layout_height="match_parent" />
 </FrameLayout>

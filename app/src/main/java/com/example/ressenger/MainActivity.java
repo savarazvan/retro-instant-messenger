@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements RecentsFragment.O
             return;
         }
 
-        myRef = database.getReference("users/"+mAuth.getCurrentUser().getUid()+"/name");
+        myRef = database.getReference("users/"+mAuth.getCurrentUser().getUid());
 
         tabLayout = findViewById(R.id.tabLayout);
         final ViewPager viewPager = findViewById(R.id.viewPager);
@@ -101,8 +101,11 @@ public class MainActivity extends AppCompatActivity implements RecentsFragment.O
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                name = dataSnapshot.getValue(String.class);
+                name = dataSnapshot.child("name").getValue(String.class);
                 toolbar.setTitle("Hello there, " + name+'!');
+
+                myRef.child("presence").onDisconnect().setValue(false);
+                myRef.child("presence").setValue(true);
             }
 
             @Override
@@ -116,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements RecentsFragment.O
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                name = dataSnapshot.getValue(String.class);
+                name = dataSnapshot.child("name").getValue(String.class);
                 toolbar.setTitle("Hello there, " + name+'!');
             }
 

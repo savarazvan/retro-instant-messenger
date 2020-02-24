@@ -6,8 +6,11 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,19 +20,89 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class PeopleFragment extends Fragment {
 
-    private ExpandableListView expandableListView;
+    List<UserDetails> onlineUsers = new ArrayList<UserDetails>();
+    List<UserDetails> offlineUsers = new ArrayList<UserDetails>();
 
     public PeopleFragment() {}
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = (View) inflater.inflate(R.layout.fragment_people, container, false);
 
-        expandableListView = rootView.findViewById(R.id.expandableListView);
-        ExpandableListViewAdapter adapter = new ExpandableListViewAdapter();
-        expandableListView.setAdapter(adapter);
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference("users");
+        final View rootView = inflater.inflate(R.layout.fragment_people, container, false);
+        final RecyclerView recyclerView = rootView.findViewById(R.id.peopleRecycler);
+        reference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull final DataSnapshot dsUsers)
+            {
+                final List<FriendCategory> categories = new ArrayList<FriendCategory>();
+                DatabaseReference friends = FirebaseDatabase.getInstance().getReference("friends/"+ FirebaseAuth.getInstance().getUid());
+                final List<String> friendsList = new ArrayList<String>();
+                friends.addValueEventListener(new ValueEventListener() { //updating the list of friends
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        friendsList.clear();
+                        onlineUsers.clear();
+                        offlineUsers.clear();
+                        for (DataSnapshot friend:dataSnapshot.getChildren()
+                        ) {
+                            String uid = friend.getKey();
+                            friendsList.add(uid);}
+                        for (DataSnapshot user : dsUsers.getChildren())
+                        {
+                            UserDetails curUser = user.getValue(UserDetails.class);
+                            if(!friendsList.contains(curUser.getUid()) || onlineUsers.contains(curUser) || offlineUsers.contains(curUser))//if not friend or already in list
+                                continue;
+
+                            if(curUser.getPresence())
+                            {
+                                onlineUsers.add(curUser);
+                                continue;
+                            }
+
+                            offlineUsers.add(curUser);
+                        }
+
+
+                        categories.add(new FriendCategory("Online", onlineUsers));
+                        categories.add(new FriendCategory("Offline", offlineUsers));
+
+                        LinearLayoutManager layoutManager = new LinearLayoutManager(PeopleFragment.this.getActivity());
+
+                        //instantiate your adapter with the list of genres
+                        FriendCategoryAdapter adapter = new FriendCategoryAdapter(categories);
+                        recyclerView.setLayoutManager(layoutManager);
+                        recyclerView.setAdapter(adapter);
+
+                    }
+
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {}
+                });
+
+
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
+        });
+
+
+
+
+
 
         return rootView;
     }
@@ -38,7 +111,10 @@ public class PeopleFragment extends Fragment {
         void onFragmentInteraction(Uri uri);
     }
 
+    private void updatePresence(DataSnapshot dsUsers)
+    {
 
+    }
 
     @Override
     public void onAttach(Context context) {

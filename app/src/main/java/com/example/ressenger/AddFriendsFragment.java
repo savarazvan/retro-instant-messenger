@@ -36,6 +36,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.thoughtbot.expandablerecyclerview.viewholders.ChildViewHolder;
+import com.thoughtbot.expandablerecyclerview.viewholders.GroupViewHolder;
 
 import java.util.List;
 
@@ -174,6 +176,44 @@ public class AddFriendsFragment extends Fragment {
             if(listener!=null)
                 listener.onMessage(getAdapterPosition());
         }
+
+        public static class FindPeopleCategoryViewHolder extends ChildViewHolder implements View.OnClickListener
+        {
+            View view;
+            RecentsAdapter.onMessageListener listener;
+
+            public FindPeopleCategoryViewHolder(View itemView)
+            {
+                super(itemView);
+                view = itemView;
+            }
+
+            public FindPeopleCategoryViewHolder(View itemView, RecentsAdapter.onMessageListener listener)
+            {
+                super(itemView);
+                view = itemView;
+                this.listener=listener;
+                itemView.setOnClickListener(this);
+            }
+
+            public void setUsername(String name) {
+                TextView nameText = view.findViewById(R.id.Name);
+                nameText.setText(name);
+            }
+
+            public void setStatus(String status)
+            {
+                TextView statusText = view.findViewById(R.id.Status);
+                statusText.setText(status);
+            }
+
+            @Override
+            public void onClick(View v) {
+                if(listener!=null)
+                    listener.onMessage(getAdapterPosition());
+            }
+        }
     }
+
 
 }

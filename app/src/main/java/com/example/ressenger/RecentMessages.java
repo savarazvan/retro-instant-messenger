@@ -1,6 +1,9 @@
 package com.example.ressenger;
 
-public class RecentMessages{
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class RecentMessages {
 
     public String name, content, sender;
 
@@ -9,6 +12,12 @@ public class RecentMessages{
     public RecentMessages(String sender, String content) {
         this.sender = sender;
         this.content = content;
+    }
+
+    protected RecentMessages(Parcel in) {
+        name = in.readString();
+        content = in.readString();
+        sender = in.readString();
     }
 
     public String getName() {
@@ -34,5 +43,6 @@ public class RecentMessages{
     public void setSender(String sender) {
         this.sender = sender;
     }
+
 }
 
