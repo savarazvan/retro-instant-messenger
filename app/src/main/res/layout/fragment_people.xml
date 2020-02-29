@@ -1,13 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#ECE9D8"
+    android:orientation="vertical"
     tools:context=".PeopleFragment">
+
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar3"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@drawable/button"
+        android:visibility="visible"
+        android:windowSoftInputMode="adjustPan">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/addGroupInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="100dp"
+            android:background="@null"
+            android:visibility="gone"
+            android:windowSoftInputMode="adjustPan"
+            tools:visibility="gone">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/addGroupInputText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@null"
+                android:fontFamily="@font/times_new_roman_bold_italic"
+                android:hint="Category name"
+                android:lines="1"
+                android:scrollbars="none"
+                android:textAppearance="@style/TextAppearance.TabsFont"
+                android:textColor="#BF000000"
+                android:textColorHighlight="#DA6F6F6F"
+                android:textColorLink="#DA6F6F6F"
+                android:textSize="24sp"
+                android:windowSoftInputMode="adjustPan" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <ImageView
+            android:id="@+id/addButton"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_gravity="center_vertical|end"
+            android:layout_marginRight="10dp"
+            android:src="@android:drawable/ic_input_add"
+            android:visibility="visible" />
+        <ImageView
+            android:id="@+id/editButton"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_gravity="center_vertical|end"
+            android:layout_marginRight="10dp"
+            android:src="@android:drawable/ic_menu_edit"
+            android:visibility="visible" />
+    </androidx.appcompat.widget.Toolbar>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/peopleRecycler"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-</FrameLayout>
+        android:layout_height="wrap_content"
+        android:layout_weight="15"
+        android:background="@drawable/chatbg" />
+</LinearLayout>

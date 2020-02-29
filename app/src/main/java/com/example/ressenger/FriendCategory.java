@@ -25,36 +25,11 @@ public class FriendCategory extends ExpandableGroup<UserDetails> {
             super(itemView);
             categoryTitle = itemView.findViewById(R.id.list_item_genre_name);
             downArrow = itemView.findViewById(R.id.list_item_genre_arrow);
-            check = null;// itemView.findViewById(R.id.list_item_genre_check);
-
-            View.OnLongClickListener longClickListener = new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    categoryTitle.setEnabled(true);
-                    downArrow.setVisibility(View.GONE);
-                    check.setVisibility(View.VISIBLE);
-                    return false;
-                }
-            };
-
-            View.OnClickListener checkListener = new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    downArrow.setVisibility(View.VISIBLE);
-                    check.setVisibility(View.GONE);
-                    String input = categoryTitle.getText().toString().trim();
-                    if (input.equals(categoryTitle.getHint().toString()))
-                        return;
-                    categoryTitle.setText("");
-                    categoryTitle.setHint(input);
-                }
-            };
     }
 
     public void setCategoryTitle(ExpandableGroup group) {
-        categoryTitle.setHint(group.getTitle());
+        categoryTitle.setText(group.getTitle());
     }
-
 
     }
 
