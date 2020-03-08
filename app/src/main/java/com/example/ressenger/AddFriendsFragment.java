@@ -126,7 +126,7 @@ public class AddFriendsFragment extends Fragment {
                             findPeopleViewHolder.view.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
-                                    ChatActivity.ref = FirebaseDatabase.getInstance().getReference("users/"+findNewFriends.getUid());
+                                    ChatActivity.userRef = FirebaseDatabase.getInstance().getReference("users/"+findNewFriends.getUid());
                                     Intent intent = new Intent(AddFriendsFragment.this.getActivity(), ChatActivity.class);
                                     startActivity(intent);
                                 }

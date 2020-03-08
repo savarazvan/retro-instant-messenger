@@ -2,7 +2,6 @@ package com.example.ressenger;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager.widget.ViewPager;
-
 import android.os.Bundle;
 import androidx.appcompat.widget.Toolbar;
 import com.google.android.material.tabs.TabLayout;
@@ -10,18 +9,15 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-public class ChatActivity extends AppCompatActivity {
+public class ChatRoomActivity extends AppCompatActivity {
 
-    TabLayout tabLayout;
     public static DatabaseReference userRef;
     public static String uid, myUid;
-    Toolbar toolbar;
-    public static String conversation;
     public static String name;
-    private DatabaseReference conversationRef=FirebaseDatabase.getInstance().getReference("conversations");
+    TabLayout tabLayout;
+    Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,11 +32,11 @@ public class ChatActivity extends AppCompatActivity {
             }
             @Override public void onCancelled(@NonNull DatabaseError databaseError) {}});
 
-        setContentView(R.layout.activity_chat);
-        tabLayout = findViewById(R.id.tabLayoutChat);
-        toolbar = findViewById(R.id.toolbar2);
-        final ViewPager viewPager = findViewById(R.id.viewPagerChat);
-        PagerAdapterChat pagerAdapter = new PagerAdapterChat(getSupportFragmentManager(), tabLayout.getTabCount());
+        setContentView(R.layout.activity_chat_group);
+        tabLayout = findViewById(R.id.tabLayoutChatRoom);
+        toolbar = findViewById(R.id.toolbarChat);
+        final ViewPager viewPager = findViewById(R.id.viewPagerChatRoom);
+        PagerAdapterChatRoom pagerAdapter = new PagerAdapterChatRoom(getSupportFragmentManager(), tabLayout.getTabCount());
         viewPager.setAdapter(pagerAdapter);
         viewPager.setOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
         tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {

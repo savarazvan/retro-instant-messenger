@@ -1,6 +1,5 @@
 package com.example.ressenger;
 
-import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -33,7 +32,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -42,38 +40,43 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
 
-public class ChatFragment extends Fragment {
+public class ChatRoomFragment extends Fragment {
 
     static int preferredFont = 0, textSize = 0, color = Color.parseColor("#000000");
     private TextInputEditText textBoxText;
     private DatabaseReference messagesRef;
     private MessageAdapter messageAdapter;
     private RecyclerView recyclerView;
-
     private byte[] encryptionKey = {9, 115, 51, 86, 105, 4, -31, -23, -68, 88, 17, 20, 3, -105, 119, -53};
     private Cipher cipher, decipher;
     private SecretKeySpec secretKeySpec;
-
-
-    public ChatFragment() {}
     private ValueEventListener retrieveMessages = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("conversations/"+ChatActivity.conversation+"/participants");
-            ref.child(Objects.requireNonNull(FirebaseAuth.getInstance().getUid())).setValue(true);
-            ref.child(ChatActivity.uid).setValue(true);
             //-------------------------------------------------------------------
-            textBoxText.setHint("Write " + ChatActivity.name + " a message");
+            textBoxText.setHint("Write a message to " + ChatRoomActivity.name);
             List<Message> mList = new ArrayList<>();
             mList.clear();
-            String myUid = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
+            String myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
             for(DataSnapshot ds : dataSnapshot.getChildren())
             {
                 Message newMessage = ds.getValue(Message.class);
-                assert newMessage != null;
-                final boolean sent = newMessage.getReceiver().equals(ChatActivity.uid) && newMessage.getSender().equals(myUid);
-                newMessage.setSender(sent ? "Me:" : ChatActivity.name + " says:");
+                final boolean sent = newMessage.getSender().equals(myUid);
+                final String[] sender = new String[1];
+                if(!sent)
+                {
+                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference("users/"+newMessage.getSender());
+                    ref.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot ds) {
+                            sender[0] = ds.child("name").getValue(String.class);
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {}});
+                }
+                newMessage.setSender(sent ? "Me:" : sender[0] + " says:");
                 try {
                     newMessage.setContent(AESDecryptionMethod(newMessage.getContent()));
                 } catch (UnsupportedEncodingException e) {
@@ -82,7 +85,7 @@ public class ChatFragment extends Fragment {
                 mList.add(newMessage);
             }
 
-            messageAdapter = new MessageAdapter(ChatFragment.this.getActivity(), mList);
+            messageAdapter = new MessageAdapter(ChatRoomFragment.this.getActivity(), mList);
             recyclerView.setAdapter(messageAdapter);
         }
 
@@ -91,29 +94,24 @@ public class ChatFragment extends Fragment {
 
         }
     };
-
-    public interface OnFragmentInteractionListener {
-        void onFragmentInteraction(Uri uri);
-    }
+    public ChatRoomFragment() {}
 
     private void sendMessage(String message)
     {
         if(message==null)
             return;
 
-        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<String, Object>();
         String tempKey = messagesRef.push().getKey();
         messagesRef.updateChildren(map);
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
         Date date = new Date();
         String currentDate = formatter.format(date);
-        assert tempKey != null;
         DatabaseReference messageRef = messagesRef.child(tempKey);
         //----------------------------------------------------------
-        Map<String, Object> map2 = new HashMap<>();
+        Map<String, Object> map2 = new HashMap<String, Object>();
         map2.put("content", AESEncryptionMethod(message));
-        map2.put("sender", Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid());
-        map2.put("receiver", ChatActivity.uid);
+        map2.put("sender", FirebaseAuth.getInstance().getCurrentUser().getUid());
         map2.put("date", currentDate);
         map2.put("font", preferredFont);
         map2.put("size", textSize);
@@ -121,7 +119,6 @@ public class ChatFragment extends Fragment {
         messageRef.updateChildren(map2);
     }
 
-    @SuppressLint("GetInstance")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_chat, container, false);
@@ -133,7 +130,9 @@ public class ChatFragment extends Fragment {
         try {
             cipher = Cipher.getInstance("AES");
             decipher = Cipher.getInstance("AES");
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
             e.printStackTrace();
         }
 
@@ -142,7 +141,7 @@ public class ChatFragment extends Fragment {
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String messageSent = Objects.requireNonNull(textBoxText.getText()).toString().trim();
+                String messageSent = textBoxText.getText().toString().trim();
                 sendMessage(messageSent);
                 textBoxText.setText("");
             }
@@ -151,22 +150,21 @@ public class ChatFragment extends Fragment {
         fontButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FontBottomSheet bottomSheet = new FontBottomSheet(ChatFragment.this.getActivity());
-                assert getFragmentManager() != null;
+                FontBottomSheet bottomSheet = new FontBottomSheet(ChatRoomFragment.this.getActivity());
                 bottomSheet.show(getFragmentManager(), "sampleBottomSheet");
             }
         });
 
         recyclerView.setHasFixedSize(true);
         recyclerView.setAdapter(messageAdapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(ChatFragment.this.getActivity()));
+        recyclerView.setLayoutManager(new LinearLayoutManager(ChatRoomFragment.this.getActivity()));
         messagesRef = FirebaseDatabase.getInstance().getReference("conversations/" + ChatActivity.conversation + "/messages");
         messagesRef.addValueEventListener(retrieveMessages);
         return rootView;
 
     }
 
-    private String AESEncryptionMethod(String message)
+    public String AESEncryptionMethod(String message)
     {
         byte[] messageBytes = message.getBytes();
         byte[] encryptedBytes = new byte[messageBytes.length];
@@ -174,11 +172,15 @@ public class ChatFragment extends Fragment {
         try {
             cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);
             encryptedBytes = cipher.doFinal(messageBytes);
-        } catch (InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
             e.printStackTrace();
         }
 
-        String returnedMessage;
+        String returnedMessage = null;
 
         returnedMessage = new String(encryptedBytes, StandardCharsets.ISO_8859_1);
 
@@ -186,7 +188,7 @@ public class ChatFragment extends Fragment {
 
     }
 
-    private String AESDecryptionMethod(String message) throws UnsupportedEncodingException {
+    public String AESDecryptionMethod(String message) throws UnsupportedEncodingException {
 
         byte[] encryptedBytes = message.getBytes(StandardCharsets.ISO_8859_1);
         String decryptedMessage = message;
@@ -197,11 +199,19 @@ public class ChatFragment extends Fragment {
             decipher.init(Cipher.DECRYPT_MODE, secretKeySpec);
             decryption = decipher.doFinal(encryptedBytes);
             decryptedMessage = new String(decryption);
-        } catch (InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
             e.printStackTrace();
         }
 
         return decryptedMessage;
+    }
+
+    public interface OnFragmentInteractionListener {
+        void onFragmentInteraction(Uri uri);
     }
 
 }
