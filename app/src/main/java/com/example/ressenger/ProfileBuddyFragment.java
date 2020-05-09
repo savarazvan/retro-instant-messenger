@@ -57,7 +57,7 @@ public class ProfileBuddyFragment extends Fragment {
 
     @Override
     public void onStart() {
-        DatabaseReference reference = ChatActivity.ref;
+        DatabaseReference reference = ChatActivity.userRef;
         DatabaseReference requests = FirebaseDatabase.getInstance().getReference("friend-requests");
         reference.addValueEventListener(listener);
         requests.addValueEventListener(updateState);

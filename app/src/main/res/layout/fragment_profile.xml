@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/linearLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#ECE9D8"
+    android:orientation="vertical">
+
+    <ScrollView
+        android:id="@+id/scrollViewProfile"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/profilePic"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_gravity="center|top"
+                android:layout_marginTop="50dp"
+                android:visibility="visible" />
+
+            <TextView
+                android:id="@+id/profileName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Saba"
+                android:textAppearance="@style/TextAppearance.TabsFont"
+                android:textColor="#000000"
+                android:textSize="36sp"
+                android:visibility="visible" />
+
+            <TextView
+                android:id="@+id/profileStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|center"
+                android:layout_marginBottom="5dp"
+                android:fontFamily="@font/times_new_roman"
+                android:gravity="center"
+                android:text="TextView"
+                android:textSize="18sp"
+                android:visibility="visible" />
+
+            <TextView
+                android:id="@+id/profileBio"
+                android:layout_width="wrap_content"
+                android:layout_height="150dp"
+                android:background="@drawable/textbox"
+                android:fontFamily="@font/times_new_roman"
+                android:padding="1dp"
+                android:text="Well hello there!"
+                android:textColor="#000000"
+                android:textSize="20dp"
+                android:visibility="visible" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <ScrollView
+        android:id="@+id/scrollViewEditProfile"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/profilePicEdit"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_gravity="center|top"
+                android:layout_marginTop="50dp"
+                android:visibility="visible" />
+
+            <EditText
+                android:id="@+id/profileNameEdit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Saba"
+                android:textAppearance="@style/TextAppearance.TabsFont"
+                android:textColor="#000000"
+                android:textSize="36sp"
+                android:visibility="visible" />
+
+            <EditText
+                android:id="@+id/profileStatusEdit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|center"
+                android:layout_marginBottom="5dp"
+                android:fontFamily="@font/times_new_roman"
+                android:gravity="center"
+                android:text="TextView"
+                android:textSize="18sp"
+                android:visibility="visible" />
+
+            <EditText
+                android:id="@+id/profileBioEdit"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:background="@drawable/textbox"
+                android:fontFamily="@font/times_new_roman"
+                android:gravity="top"
+                android:padding="1dp"
+                android:text="Well hello there!"
+                android:textColor="#000000"
+                android:textSize="20dp"
+                android:visibility="visible" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

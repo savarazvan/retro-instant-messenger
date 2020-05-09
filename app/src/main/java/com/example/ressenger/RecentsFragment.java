@@ -33,26 +33,20 @@ public class RecentsFragment extends Fragment implements RecentsAdapter.onMessag
     RecentsAdapter.onMessageListener listener = this;
     private RecyclerView recentMessages;
     private DatabaseReference messagesRef, userRef;
-    private List<Message> fetchedMessages = new ArrayList<>();
+    private List<String> fetchedConversations = new ArrayList<>();
     public RecentsFragment() {}
     private ValueEventListener fetchMessages = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            fetchedMessages.clear();
-            List<String> uids = new ArrayList<>();//here we'll store the users that have already been fetched in order to avoid duplicates
-            for (DataSnapshot node:dataSnapshot.getChildren()
-                 ) {
+            String myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            fetchedConversations.clear();
 
-                //if the message isn't addressed to us or the user has already been fetched, skip
-                if(!node.child("receiver").getValue().toString().equals(FirebaseAuth.getInstance().getCurrentUser().getUid())
-                || uids.contains(node.child("sender").getValue().toString()))
-                    continue;
-                uids.add(node.child("sender").getValue().toString());
-                fetchedMessages.add(node.getValue(Message.class));
-            }
+            for (DataSnapshot node:dataSnapshot.getChildren())
+                if (node.child("participants/" + myUid).exists() &&
+                        node.child("participants/" + myUid).getValue(Boolean.class))
+                            fetchedConversations.add(node.getKey());
 
-
-            RecentsAdapter adapter = new RecentsAdapter(RecentsFragment.this.getActivity(), fetchedMessages, listener);
+            RecentsAdapter adapter = new RecentsAdapter(RecentsFragment.this.getActivity(), fetchedConversations, listener);
 
             recentMessages.setAdapter(adapter);
 
@@ -66,7 +60,7 @@ public class RecentsFragment extends Fragment implements RecentsAdapter.onMessag
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_recents, container, false);
-        messagesRef = FirebaseDatabase.getInstance().getReference("messages");
+        messagesRef = FirebaseDatabase.getInstance().getReference("conversations");
         recentMessages = rootView.findViewById(R.id.recentMessages);
         recentMessages.setHasFixedSize(true);
         recentMessages.setLayoutManager(new LinearLayoutManager(RecentsFragment.this.getActivity()));
@@ -80,9 +74,28 @@ public class RecentsFragment extends Fragment implements RecentsAdapter.onMessag
 
     @Override
     public void onMessage(int position) {
-        Message message = fetchedMessages.get(position);
-        ChatActivity.ref = FirebaseDatabase.getInstance().getReference("users/"+message.getSender());
-        Intent intent = new Intent(RecentsFragment.this.getActivity(), ChatActivity.class);
-        startActivity(intent);
+        final String message = fetchedConversations.get(position);
+        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("conversations/" + message);
+        ref.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(dataSnapshot.child("private").getValue(Boolean.class))
+                {
+                    String uid=null;
+                    for(DataSnapshot participant : dataSnapshot.child("participants").getChildren()) {
+                        if (!participant.getKey().equals(FirebaseAuth.getInstance().getCurrentUser().getUid()))
+                            uid = participant.getKey();
+                    }
+                    if(uid==null)
+                        return;
+                    ChatActivity.conversation = dataSnapshot.getKey();
+                    ChatActivity.userRef = FirebaseDatabase.getInstance().getReference("users/"+uid);
+                    Intent intent = new Intent(RecentsFragment.this.getActivity(), ChatActivity.class);
+                    startActivity(intent);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}});
     }
 }

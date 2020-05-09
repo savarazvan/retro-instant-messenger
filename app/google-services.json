@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "284268654847",
+    "firebase_url": "https://retro-instant-messenger.firebaseio.com",
+    "project_id": "retro-instant-messenger",
+    "storage_bucket": "retro-instant-messenger.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:284268654847:android:7faac5807e39e642429cca",
+        "android_client_info": {
+          "package_name": "com.example.ressenger"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "284268654847-qeljrblp9mu2083jl9oduftd2lk38h17.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.ressenger",
+            "certificate_hash": "07455399522de7efdfd2ba2f7634089691846717"
+          }
+        },
+        {
+          "client_id": "284268654847-jvqaslmkuo2143nej95k9ro54fepr51q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmFtRViE42OcmOc0e5CrH1px0JuFmG4v0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "284268654847-jvqaslmkuo2143nej95k9ro54fepr51q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
